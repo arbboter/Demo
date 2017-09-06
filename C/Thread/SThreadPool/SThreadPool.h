@@ -6,7 +6,7 @@
 
 using namespace std;
 
-// æŠ½è±¡å‡ºçš„ä»»åŠ¡å‡½æ•°
+// ³éÏó³öµÄÈÎÎñº¯Êı
 typedef int ( *pTaskPro)(void* pPara);
 
 class CSThreadPool
@@ -15,7 +15,7 @@ public:
     CSThreadPool(int nThrNum);
     ~CSThreadPool(void);
 
-    /* ä»»åŠ¡ä¿¡æ¯ */
+    /* ÈÎÎñĞÅÏ¢ */
     typedef struct __task_info__
     {
         pTaskPro    RunTask;
@@ -28,16 +28,24 @@ protected:
     vector<HANDLE>      m_vecThrHandle;
     deque<STTaskInfo>   m_dqTask;
     CRITICAL_SECTION    m_csTask;
-    HANDLE              m_hTaskAppend; // æ–°ä»»åŠ¡æ·»åŠ äº‹ä»¶
+    HANDLE              m_hTaskAppend; // ĞÂÈÎÎñÌí¼ÓÊÂ¼ş,³äµ±Ìõ¼ş±äÁ¿
+    size_t              m_nMaxCacheTask; // ÈÎÎñ¶ÓÁĞÈİÁ¿Öµ
 
 protected:
     int PopTask(STTaskInfo& oTask);
     static unsigned __stdcall RunThread(void* pPara);
 
 public:
+    // Æô¶¯Ïß³Ì³Ø
     bool Start();
+    // ±©Á¦Ö±½ÓÍË³ö£¬²»½¨ÒéÊ¹ÓÃ
     bool Stop();
-    void AddTask(pTaskPro TaskPro, void* pTaskPara);
+    // µÈ´ıËùÓĞÈÎÎñÖ´ĞĞÍê±Ï£¬ÔÙÍË³ö
+    bool WaitAll();
+    // Ìí¼ÓÈÎÎñÖÁÏß³Ì³Ø£¨µ±¶ÓÁĞÖĞÈÎÎñÊıÌ«¶àÊ±£¬Ìí¼ÓÈÎÎñÊ§°Ü£¬·µ»Ø-1£©
+    int  AddTask(pTaskPro TaskPro, void* pTaskPara);
+    // »ñÈ¡µ±Ç°»º³å¶ÓÁĞÖĞÅÅ¶ÓÈÎÎñÊı
     int  GetCachedTaskNum();
+    // ÅĞ¶ÏÏß³Ì³ØÊÇ·ñÆô¶¯
     bool IsRun();
 };

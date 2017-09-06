@@ -3,12 +3,15 @@
 #include <process.h>
 
 
-/** CSThreadPoolæ–¹æ³• **/
+/** CSThreadPool·½·¨ **/
 CSThreadPool::CSThreadPool(int nThrNum)
 {
     m_nThrNum = nThrNum;
     m_bInit = false;
     InitializeCriticalSection(&m_csTask);
+
+    // ÉèÖÃÈÎÎñÈÝÁ¿Ä¬ÈÏÖµ
+    m_nMaxCacheTask = 40960;
 }
 
 
@@ -20,12 +23,11 @@ CSThreadPool::~CSThreadPool(void)
 int CSThreadPool::GetCachedTaskNum()
 {
     int nRet = 0;
-    if (m_dqTask.size() > 0)
-    {
-        EnterCriticalSection(&m_csTask);
-        nRet = m_dqTask.size();
-        LeaveCriticalSection(&m_csTask);
-    }
+
+    EnterCriticalSection(&m_csTask);
+    nRet = m_dqTask.size();
+    LeaveCriticalSection(&m_csTask);
+
     return nRet;
 }
 
@@ -37,28 +39,30 @@ bool CSThreadPool::IsRun()
 int CSThreadPool::PopTask(STTaskInfo& oTask)
 {
     int nRet = -1;
-    if(m_bInit)
+    // ÂÖÑ¯»ñÈ¡ÈÎÎñ
+    while (m_bInit)
     {
-        // è½®è¯¢èŽ·å–ä»»åŠ¡
-        while(nRet != 0)
+        if (m_dqTask.size() > 0)
         {
-            if(m_dqTask.size() > 0)
+            EnterCriticalSection(&m_csTask);
+            if (m_dqTask.size() > 0)
             {
-                EnterCriticalSection(&m_csTask);
-                if (m_dqTask.size() > 0)
-                {
-                    oTask = m_dqTask.back();
-                    m_dqTask.pop_back();
-                    nRet = 0;
-                }
-                LeaveCriticalSection(&m_csTask);
+                oTask = m_dqTask.back();
+                m_dqTask.pop_back();
+                nRet = 0;
             }
-            else
+            LeaveCriticalSection(&m_csTask);
+
+            // ¼ì²é»ñÈ¡ÈÎÎñÊÇ·ñ³É¹¦
+            if (nRet == 0)
             {
-                //printf("[%-5d] no more taskã€‚\n", GetCurrentThreadId());
-                WaitForSingleObject(m_hTaskAppend, INFINITE);
-                // Sleep(1000);
+                break;
             }
+        }
+        else
+        {
+            // ½áÊøÏß³Ì³ØÊ±£¬Îª·ÀÖ¹´Ë´¦Ò»Ö±µÈ´ý£¬ÐèÒªÖØÖÃÊÂ¼þ
+            WaitForSingleObject(m_hTaskAppend, INFINITE);
         }
     }
     return nRet;
@@ -70,10 +74,10 @@ unsigned __stdcall CSThreadPool::RunThread(void* pPara)
     CSThreadPool* pThis = (CSThreadPool*)pPara;
 
     STTaskInfo oTask;
-    while(pThis->m_bInit)
+    while (pThis->m_bInit)
     {
-        // åŒæ­¥èŽ·å–ä»»åŠ¡
-        if(pThis->PopTask(oTask) == 0)
+        // Í¬²½»ñÈ¡ÈÎÎñ
+        if (pThis->PopTask(oTask) == 0)
         {
             oTask.RunTask(oTask.pPara);
         }
@@ -84,18 +88,18 @@ unsigned __stdcall CSThreadPool::RunThread(void* pPara)
 
 bool CSThreadPool::Start()
 {
-    if(m_bInit)
+    if (m_bInit)
     {
         return m_bInit;
     }
 
-    // ä¿®æ­£çº¿ç¨‹æ•°
-    if(m_nThrNum < 0)
+    // ÐÞÕýÏß³ÌÊý
+    if (m_nThrNum < 0)
     {
         m_nThrNum = 8;
     }
 
-    // åˆå§‹åŒ–å‚æ•°
+    // ³õÊ¼»¯²ÎÊý
     m_bInit = true;
     m_hTaskAppend = CreateEvent(NULL, FALSE, FALSE, NULL);
 
@@ -111,13 +115,21 @@ bool CSThreadPool::Start()
 
 bool CSThreadPool::Stop()
 {
-    if(m_bInit)
+    if (m_bInit)
     {
         m_bInit = false;
+        HANDLE* pHandle = new HANDLE[m_vecThrHandle.size()];
         for(size_t i=0; i<m_vecThrHandle.size(); i++)
         {
-            WaitForSingleObject(m_vecThrHandle[i], INFINITE);
+            pHandle[i] = m_vecThrHandle[i];
+            // ´¥·¢×èÈûµÄÈÎÎñ¼ÌÐøÖ´ÐÐ£¬ÒÔÃâ´¦ÓÚÎÞÏÞµÈ´ý²»ÄÜ½áÊø
+            SetEvent(m_hTaskAppend);
         }
+        WaitForMultipleObjects(m_vecThrHandle.size(), pHandle, TRUE, INFINITE);
+
+        delete[] pHandle;
+        pHandle = NULL;
+
         m_vecThrHandle.clear();
         m_dqTask.clear();
         CloseHandle(m_hTaskAppend);
@@ -126,16 +138,33 @@ bool CSThreadPool::Stop()
     return m_bInit;
 }
 
-void CSThreadPool::AddTask(pTaskPro TaskPro, void* pTaskPara)
+bool CSThreadPool::WaitAll()
 {
-    if(m_bInit)
+    // µÈ´ý¶ÓÁÐÖÐÎÞÈÎÎñÊ±²ÅÄÜÖÕÖ¹Ïß³Ì³ØÖÐµÄÏß³ÌÊý
+    while (GetCachedTaskNum() > 0)
+    {
+        Sleep(1000);
+    }
+
+    return Stop();
+}
+
+int CSThreadPool::AddTask(pTaskPro TaskPro, void* pTaskPara)
+{
+    int nRet = -1;
+    if (m_bInit)
     {
         STTaskInfo oTask;
         oTask.RunTask = TaskPro;
         oTask.pPara = pTaskPara;
         EnterCriticalSection(&m_csTask);
-        m_dqTask.push_front(oTask);
+        if (m_dqTask.size() < m_nMaxCacheTask)
+        {
+            m_dqTask.push_front(oTask);
+            nRet = 0;
+        }
         SetEvent(m_hTaskAppend);
         LeaveCriticalSection(&m_csTask);
     }
+    return nRet;
 }
