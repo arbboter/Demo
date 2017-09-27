@@ -5,8 +5,16 @@
 #include <vector>
 #include <stdarg.h>
 #include <Windows.h>
+#include <DbgHelp.h>
+
 
 using namespace std;
+namespace CMS{
+
+
+// 程序崩溃Dump文件
+int  GenerateMiniDump(HANDLE hFile, PEXCEPTION_POINTERS pExceptionPointers, PWCHAR pwAppName);
+LONG WINAPI ExceptionFilter(LPEXCEPTION_POINTERS lpExceptionInfo);
 
 class CSlog
 {
@@ -48,6 +56,7 @@ public:
         string          strTag;         // 日志等级标签名
         string          strMsg;         // 日志信息
         string          strDateTime;    // 日志时间
+        string          strTitle;       // 标题（抬头）
     }LogInfo;
 
 public:
@@ -62,8 +71,8 @@ public:
     // 获取路径单元，分割路径
     int GetPathUnit(const string& strPath, vector<string>& vecPath);
     // 格式化字符串到string
-    string Formate(const char * pFmt, ...);
-    string Formate(const char * pFmt, va_list va);
+    static string Formate(const char * pFmt, ...);
+    static string Formate(const char * pFmt, va_list va);
 
     // 字符串分割 
     static int Split(const string& strSrc, const string& strDim, vector<string>& vecItems);
@@ -80,6 +89,7 @@ public:
 public:
     // 生成日志信息
     void    LogFormate(LogInfo& oInfo, const LV& lv, const int nLine, const char* pFunc, const char* pFile, const char* pFmt, ...);
+    void    LogBuf(LogInfo& oInfo, const LV& lv, const int nLine, const char* pFunc, const char* pFile, const char* pBuf, const int nLen);
     string  BuildInfo(const LogInfo& oInfo);
     string  BuildHeader(const string& strTag);
     // 写日志
@@ -151,6 +161,15 @@ protected:
                                 SLogInst->WriteLog(lv, __LOGLv_strLog__);\
                             }while(0);
 
+#define BLOGLv(lv, pTitle, pBuf, nLen)  do{\
+                                    CSlog::LogInfo __LOGLv_lg__;\
+                                    string __LOGLv_strLog__;\
+                                    SLogInst->LogBuf(__LOGLv_lg__, lv, __LINE__, __FUNCTION__, __FILE__, pBuf, nLen); \
+                                    __LOGLv_lg__.strTitle = pTitle; \
+                                    __LOGLv_strLog__ =  SLogInst->BuildInfo(__LOGLv_lg__);\
+                                    SLogInst->WriteLog(lv, __LOGLv_strLog__);\
+                                }while(0);
+
 #define LOGLvH(lv,tag)      do{\
                                 string __LOGLv_strLog__;\
                                 __LOGLv_strLog__ = SLogInst->BuildHeader(tag);\
@@ -163,6 +182,13 @@ protected:
 #define LOGW(fmt,...)   LOGLv(CSlog::LV_WARN ,fmt,  ##__VA_ARGS__)
 #define LOGE(fmt,...)   LOGLv(CSlog::LV_ERROR,fmt,  ##__VA_ARGS__)
 #define LOGF(fmt,...)   LOGLv(CSlog::LV_FATAL,fmt,  ##__VA_ARGS__)
+
+// 二进制安全日志
+#define BLOGD(pTitle, pBuf, nLen)   BLOGLv(CSlog::LV_DEBUG, pTitle, pBuf, nLen)
+#define BLOGI(pTitle, pBuf, nLen)   BLOGLv(CSlog::LV_INFO , pTitle, pBuf, nLen)
+#define BLOGW(pTitle, pBuf, nLen)   BLOGLv(CSlog::LV_WARN , pTitle, pBuf, nLen)
+#define BLOGE(pTitle, pBuf, nLen)   BLOGLv(CSlog::LV_ERROR, pTitle, pBuf, nLen)
+#define BLOGF(pTitle, pBuf, nLen)   BLOGLv(CSlog::LV_FATAL, pTitle, pBuf, nLen)
 
 // 日志分段标签，默认标签当前函数名
 #define LOGDH()   LOGLvH(CSlog::LV_DEBUG,__FUNCTION__)
@@ -177,5 +203,7 @@ protected:
 #define LOGWHT(tag)   LOGLvH(CSlog::LV_WARN ,tag)
 #define LOGEHT(tag)   LOGLvH(CSlog::LV_ERROR,tag)
 #define LOGFHT(tag)   LOGLvH(CSlog::LV_FATAL,tag)
+
+}
 
 #endif

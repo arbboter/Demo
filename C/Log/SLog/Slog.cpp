@@ -6,6 +6,8 @@
 #include <stdexcept>
 
 using namespace std;
+using namespace CMS;
+
 
 // 关闭特定编译警告
 #pragma warning(disable:4996)
@@ -112,6 +114,7 @@ string CSlog::BuildInfo(const LogInfo& oInfo)
           << "[" << oInfo.nPid << "," << oInfo.nTid << "] "
           << "[" << GetFileName(oInfo.strFile) << "," << oInfo.nLine << "," << oInfo.strFunc << "] "
           << "#" << oInfo.strTag << "# "
+          << oInfo.strTitle
           << oInfo.strMsg << "\n";
     
     return ssLog.str();
@@ -169,6 +172,19 @@ void CSlog::LogFormate(LogInfo& oInfo, const LV& lv, const int nLine, const char
     va_end(args);
 }
 
+void CMS::CSlog::LogBuf(LogInfo& oInfo, const LV& lv, const int nLine, const char* pFunc, const char* pFile, const char* pBuf, const int nLen)
+{
+    oInfo.strDateTime = GetDateTime(DATE_FMT_LOG_MSEC);
+    oInfo.nLogLv = lv;
+    oInfo.nLine = nLine;
+    oInfo.strFunc = pFunc;
+    oInfo.strFile = pFile;
+    oInfo.nPid = GetCurrentProcessId();
+    oInfo.nTid = GetCurrentThreadId();
+    oInfo.strTag = g_pLogTag[lv];
+    oInfo.strMsg.assign(pBuf, nLen);
+}
+
 std::string CSlog::Formate(const char * pFmt, ...)
 {
     va_list args;
@@ -218,6 +234,7 @@ std::string CSlog::Formate(const char * pFmt, va_list va)
 
 size_t CSlog::WriteLog(const LV& lv, const string& strLog)
 {
+    // return 0;
     if((lv<m_lvLog) || (lv>=LV_MAX))
     {
         return 0;
@@ -243,11 +260,22 @@ size_t CSlog::WriteLog(const LV& lv, const string& strLog)
 
     // 写当前日志
     Lock(wlv);
-    fp= ObtainFile(wlv);
-    if(fp)
+    int nTryNum = 2;
+    while(--nTryNum > 0)
     {
-        fwrite(strLog.c_str(), strLog.length(), 1, fp);
-        fflush(fp);
+        fp= ObtainFile(wlv);
+        if(fp)
+        {
+            if(fwrite(strLog.c_str(), strLog.length(), 1, fp) != 1)
+            {
+                CloseFile(wlv);
+            }
+            else
+            {
+                fflush(fp);
+                break;
+            }
+        }
     }
     Unlock(wlv);
 
@@ -353,7 +381,10 @@ FILE* CSlog::ObtainFile(const LV& lv)
                 // 打开文件失败，尝试创建目录
                 MakeMultiPath(m_strLogPath);
             }
-            break;
+            else
+            {
+                break;
+            }
         }
         else if(GetFileSize(strName.c_str()) >= m_nMaxFileSize)
         {
@@ -442,4 +473,91 @@ void CSlog::Unlock(int nLv)
     {
         LeaveCriticalSection(&m_csFile[nLv]);
     }
+}
+
+
+
+
+/** Dump相关函数 **/
+
+int CMS::GenerateMiniDump(HANDLE hFile, PEXCEPTION_POINTERS pExceptionPointers, PWCHAR pwAppName)
+{
+    BOOL bOwnDumpFile = FALSE;
+    HANDLE hDumpFile = hFile;
+    MINIDUMP_EXCEPTION_INFORMATION ExpParam;
+
+    typedef BOOL(WINAPI * MiniDumpWriteDumpT)(
+        HANDLE,
+        DWORD,
+        HANDLE,
+        MINIDUMP_TYPE,
+        PMINIDUMP_EXCEPTION_INFORMATION,
+        PMINIDUMP_USER_STREAM_INFORMATION,
+        PMINIDUMP_CALLBACK_INFORMATION
+        );
+
+    MiniDumpWriteDumpT pfnMiniDumpWriteDump = NULL;
+    HMODULE hDbgHelp = LoadLibrary("DbgHelp.dll");
+    if (hDbgHelp)
+    {
+        pfnMiniDumpWriteDump = (MiniDumpWriteDumpT)GetProcAddress(hDbgHelp, "MiniDumpWriteDump");
+    }
+
+    if (pfnMiniDumpWriteDump)
+    {
+        if (hDumpFile == NULL || hDumpFile == INVALID_HANDLE_VALUE)
+        {
+            TCHAR szFileName[MAX_PATH] = { 0 };
+            TCHAR* szVersion = "jtyhsfcg";
+            SYSTEMTIME stLocalTime;
+
+            GetLocalTime(&stLocalTime);
+
+            CreateDirectory(szFileName, NULL);
+
+            wsprintf(szFileName, "%s-%04d%02d%02d-%02d%02d%02d-%ld-%ld.dmp",
+                szVersion,
+                stLocalTime.wYear, stLocalTime.wMonth, stLocalTime.wDay,
+                stLocalTime.wHour, stLocalTime.wMinute, stLocalTime.wSecond,
+                GetCurrentProcessId(), GetCurrentThreadId());
+            hDumpFile = CreateFile(szFileName, GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_WRITE | FILE_SHARE_READ, 0, CREATE_ALWAYS, 0, 0);
+
+            bOwnDumpFile = TRUE;
+            OutputDebugString(szFileName);
+        }
+
+        if (hDumpFile != INVALID_HANDLE_VALUE)
+        {
+            ExpParam.ThreadId = GetCurrentThreadId();
+            ExpParam.ExceptionPointers = pExceptionPointers;
+            ExpParam.ClientPointers = FALSE;
+
+            pfnMiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(),
+                hDumpFile, MiniDumpWithDataSegs, (pExceptionPointers ? &ExpParam : NULL), NULL, NULL);
+
+            if (bOwnDumpFile)
+            {
+                CloseHandle(hDumpFile);
+            }
+        }
+    }
+
+    if (hDbgHelp != NULL)
+    {
+        FreeLibrary(hDbgHelp);
+    }
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+
+LONG WINAPI CMS::ExceptionFilter(LPEXCEPTION_POINTERS lpExceptionInfo)
+{
+    if (IsDebuggerPresent())
+    {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+
+    return CMS::GenerateMiniDump(NULL, lpExceptionInfo, L"jtyhsfcg");
 }
