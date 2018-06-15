@@ -9,4 +9,4 @@
 
 ## 效果展示
 
-![][test/hello.jpg]
+![](test/hello.jpg)
