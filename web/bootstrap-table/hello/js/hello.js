@@ -2,9 +2,9 @@ var $table;
 //初始化bootstrap-table的内容
 function InitMainTable () {
     //记录页面bootstrap-table全局变量$table，方便应用
-    var queryUrl = '#'
+    var queryUrl = 'data/user.json'
     $table = $('#table_user_manager').bootstrapTable({
-        // url: queryUrl,
+        url: queryUrl,
         method: 'get',
         toolbar: '#toolbar',
         dataType: "json",
@@ -13,7 +13,7 @@ function InitMainTable () {
         pagination: true, //分页
         sortable: true,                     //是否启用排序
         sortOrder: "asc",                   //排序方式
-        sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+        sidePagination: "server",           //分页方式： client 客户端分页， server  服务端分页（*）
         showPaginationSwitch:true,//是否显示 数据条数选择框
         showColumns: "true",//是否显示 内容列下拉框
         showRefresh: true,                  //是否显示刷新按钮
@@ -24,13 +24,16 @@ function InitMainTable () {
         paginationNextText: '下一页',//指定分页条中下一页按钮的图标或文字,这里是>
         data_local: "zh-US",//表格汉化
         clickToSelect: true, 
-        sidePagination: "client",
         //得到查询的参数
         queryParams: function (params) {//自定义参数，这里的参数是传给后台的，我这是是分页用的
-            return {//这里的params是table提供的
-                cp: params.offset,//从数据库第几条记录开始
-                ps: params.limit//找多少条
+            var pa = {   
+                rows: params.limit,                         //页面大小
+                page: (params.offset / params.limit) + 1,   //页码
+                sort: params.sort,      //排序列名  
+                sortOrder: params.order, //排位命令（desc，asc）
+                search:params.params
             };
+            return pa;
         },
         idField: "id",//指定主键列
         columns: [
@@ -119,21 +122,7 @@ function InitMainTable () {
                 formatter: operateFormatter,
                 events: operateEvents
             }
-        ],
-        data: [{ 'id': 1, 'create_time': '2018年6月15日09:43:11' },
-        { 'id': 2 },
-        { 'id': 3 },
-        { 'id': 4 },
-        { 'id': 5 },
-        { 'id': 6 },
-        { 'id': 7 },
-        { 'id': 8 },
-        { 'id': 9 },
-        { 'id': 10 },
-        { 'id': 11 },
-        { 'id': 12 },
-        { 'id': 13 },
-        { 'id': 14 }]
+        ]
     });
 
 }
