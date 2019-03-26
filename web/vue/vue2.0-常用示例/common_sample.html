@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="./js/vue.min.js"></script>
+    <title>Vue-示例</title>
+</head>
+<body>
+    <ol>
+
+
+    <li>
+        <div id="app1">
+            <h4>动态绑定-手动修改数据</h4>
+            <!-- v-model:数据双向绑定：数据模型(model)与视图(view)组件的自动同步 -->
+            <label> v-model: </label>
+            <input type="text" v-model="message">
+
+            <!-- v-bind 产生的效果不含有双向绑定 -->
+            <label> v-bind: </label>
+            <input type="text" v-bind:value="message">
+
+            <!-- 操作按钮 -->
+            <input type="button" value="动起来(组件内)" v-on:click="click">
+            <input type="button" value="动起来(组件外)" v-on:click="click1">
+            <input type="button" value="查看组件数据" v-on:click="onShowData">
+        </div>
+    </li>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function(){
+            let data = {message:'hello, vue'}
+            vm = new Vue({
+                el:'#app1', // 关联的DOM对象
+                data: data, // 代理数据，即需要操作的数据
+                methods:{   // 对象方法
+                    click () {
+                        // 此处要使用this修改当前vue对象，修改的值会自动实时更新到View
+                        this.message = Math.random().toString(36).substr(2);
+                        console.log(this.message);
+                    },
+                    onShowData(){
+                        alert(this.message);
+                    }
+                }
+            });
+
+            // 外部访问vue对象成员方法
+            // Vue实例自身属性和方法，暴露自身的属性和方法,以“$”开头的，例如：$el、$data
+            console.log(vm.$data);
+            console.log(vm.$data.message);
+        }, false);
+        
+        // 函数在外面也可以，
+        function click1 () {
+            alert('我是外人，先不动')
+        }
+    </script>
+
+
+    <li>
+        <div id="app2">
+            <h4>Vue指令</h4>
+            <ol>
+                <!-- 动态绑定数据。简写为【:】 => :class="{red:boolean}" -->
+                <h5>☆ 动态绑定数据:v-bind</h5>
+                <label>v-bind:</label>
+                <input type="text" v-bind:value="name">
+                <label>v-bind简写:</label>
+                <input type="text" :value="name">
+                <input type="button" value="动一下" v-on:click="onUpdName">
+            </ol><br>
+            <ol>
+                <!-- 绑定时间监听器。简写为【@】=> @click="xxx" -->
+                <h5>☆ 绑定时间监听器:v-on</h5>
+                <label>v-on:</label>
+                <input type="text" :value="name">
+                <input type="button" value="动一下(v-on)" v-on:click="onUpdName">
+                <input type="button" value="动一下(@)" @click="onUpdName">
+            </ol><br>
+            <ol>
+                <!-- 更新数据，简写【{{x}}】，会覆盖已有结构 => {{ msg }} -->
+                <h5>☆ 更新数据:v-text</h5>
+                <input type="button" value="动一下" @click="onUpdName">
+                <label>v-text:<span v-text="name"></span></label>
+                <label><span> {{name}}</span></label>
+            </ol><br>
+            <ol>
+                <!-- v-if:根据值的真假，切换元素会被销毁、重建； => 在dom中已消失 -->
+                <h5>☆ 条件测试:v-if</h5>
+                <label>v-if:</label>
+                <input type="text" :value="bv">
+                <input type="button" value="v-if" @click="onSwitch">
+                <input type="text" value="有本事你点一下v-if按钮" v-if="bv">
+                <input type="button" value="看不见了吧，傻啦吧唧吧，你再点点试试" v-if="!bv" @click="onSwitch">
+            </ol><br>
+            <ol>
+                <!-- v-else-if:多条件判断，为真则渲染； -->
+                <h5>☆ 多条件测试:v-else-if</h5>
+                <label>v-else-if:</label>
+                <input type="text" :value="num">
+                <input type="button" value="v-else-if" @click="onCount">
+                <input type="text" value="我能被3整除" v-if="num%3 == 0">
+                <input type="text" value="我能被2整除" v-else-if="num%2 == 0">
+            </ol><br>
+            <ol>
+                <!-- v-else ：条件都不符合时渲染； -->
+                <h5>☆ 条件都不符合测试:v-else</h5>
+                <label>v-else:</label>
+                <input type="text" :value="num">
+                <input type="button" value="v-else" @click="onCount">
+                <input type="text" value="我能被3整除" v-if="num%3 == 0">
+                <input type="text" value="我不能3整除" v-else>
+            </ol><br>
+            <ol>
+                <!-- v-for ：基于源数据多次渲染元素或模块 -->
+                <h5>☆ 循环测试:v-for</h5>
+                <label>v-for:</label>
+                <input type="button" :value="num_label" @click="onCount">
+                <input type="button" v-for="(val, idx) in num" :value="val">
+                <input type="text" v-for="i in items" :value="i">
+            </ol><br>
+            <ol>
+                <!-- v-model ：在表单控件元素（input等）上创建双向数据绑定（数据源） -->
+                <h5>☆ 动态双向绑定数据:v-model</h5>
+                <label>v-model:</label>
+                <input type="text" v-model:value="name">
+                <input type="button" value="动一下" v-on:click="onUpdName">
+                <input type="text" v-model:value="name">
+            </ol><br>
+        </div>
+        <script type="text/javascript">
+            vm = new Vue({
+                el:'#app2',
+                data:{
+                    name:'app2',
+                    msg:'vue 2.0',
+                    bv:true,
+                    num:0,
+                    items:['A', 'B', 'C']
+                },
+                methods:{
+                    onUpdName(){
+                        this.name = Math.random().toString(36).substr(10);
+                    },
+                    onSwitch(){
+                        this.bv = !this.bv;
+                    },
+                    onCount(){
+                        this.num += 1;
+                    }
+                },
+                computed:{
+                    num_label:function(){
+                        return "个数:" + this.num;
+                    }
+                }
+            })
+        </script>
+    </li>
+
+    </ol>
+</body>
+</html>
