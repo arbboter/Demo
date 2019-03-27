@@ -1,165 +1,447 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <script src="./js/vue.min.js"></script>
-    <title>Vue-示例</title>
+    <title>Vue-基础练习实践</title>
 </head>
+
 <body>
     <ol>
 
 
-    <li>
-        <div id="app1">
-            <h4>动态绑定-手动修改数据</h4>
-            <!-- v-model:数据双向绑定：数据模型(model)与视图(view)组件的自动同步 -->
-            <label> v-model: </label>
-            <input type="text" v-model="message">
+        <li>
+            <div id="app1">
+                <h4>动态绑定-手动修改数据</h4>
+                <!-- v-model:数据双向绑定：数据模型(model)与视图(view)组件的自动同步 -->
+                <label> v-model: </label>
+                <input type="text" v-model="message">
 
-            <!-- v-bind 产生的效果不含有双向绑定 -->
-            <label> v-bind: </label>
-            <input type="text" v-bind:value="message">
+                <!-- v-bind 产生的效果不含有双向绑定 -->
+                <label> v-bind: </label>
+                <input type="text" v-bind:value="message">
 
-            <!-- 操作按钮 -->
-            <input type="button" value="动起来(组件内)" v-on:click="click">
-            <input type="button" value="动起来(组件外)" v-on:click="click1">
-            <input type="button" value="查看组件数据" v-on:click="onShowData">
-        </div>
-    </li>
-    <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', function(){
-            let data = {message:'hello, vue'}
-            vm = new Vue({
-                el:'#app1', // 关联的DOM对象
-                data: data, // 代理数据，即需要操作的数据
-                methods:{   // 对象方法
-                    click () {
-                        // 此处要使用this修改当前vue对象，修改的值会自动实时更新到View
-                        this.message = Math.random().toString(36).substr(2);
-                        console.log(this.message);
-                    },
-                    onShowData(){
-                        alert(this.message);
-                    }
-                }
-            });
-
-            // 外部访问vue对象成员方法
-            // Vue实例自身属性和方法，暴露自身的属性和方法,以“$”开头的，例如：$el、$data
-            console.log(vm.$data);
-            console.log(vm.$data.message);
-        }, false);
-        
-        // 函数在外面也可以，
-        function click1 () {
-            alert('我是外人，先不动')
-        }
-    </script>
-
-
-    <li>
-        <div id="app2">
-            <h4>Vue指令</h4>
-            <ol>
-                <!-- 动态绑定数据。简写为【:】 => :class="{red:boolean}" -->
-                <h5>☆ 动态绑定数据:v-bind</h5>
-                <label>v-bind:</label>
-                <input type="text" v-bind:value="name">
-                <label>v-bind简写:</label>
-                <input type="text" :value="name">
-                <input type="button" value="动一下" v-on:click="onUpdName">
-            </ol><br>
-            <ol>
-                <!-- 绑定时间监听器。简写为【@】=> @click="xxx" -->
-                <h5>☆ 绑定时间监听器:v-on</h5>
-                <label>v-on:</label>
-                <input type="text" :value="name">
-                <input type="button" value="动一下(v-on)" v-on:click="onUpdName">
-                <input type="button" value="动一下(@)" @click="onUpdName">
-            </ol><br>
-            <ol>
-                <!-- 更新数据，简写【{{x}}】，会覆盖已有结构 => {{ msg }} -->
-                <h5>☆ 更新数据:v-text</h5>
-                <input type="button" value="动一下" @click="onUpdName">
-                <label>v-text:<span v-text="name"></span></label>
-                <label><span> {{name}}</span></label>
-            </ol><br>
-            <ol>
-                <!-- v-if:根据值的真假，切换元素会被销毁、重建； => 在dom中已消失 -->
-                <h5>☆ 条件测试:v-if</h5>
-                <label>v-if:</label>
-                <input type="text" :value="bv">
-                <input type="button" value="v-if" @click="onSwitch">
-                <input type="text" value="有本事你点一下v-if按钮" v-if="bv">
-                <input type="button" value="看不见了吧，傻啦吧唧吧，你再点点试试" v-if="!bv" @click="onSwitch">
-            </ol><br>
-            <ol>
-                <!-- v-else-if:多条件判断，为真则渲染； -->
-                <h5>☆ 多条件测试:v-else-if</h5>
-                <label>v-else-if:</label>
-                <input type="text" :value="num">
-                <input type="button" value="v-else-if" @click="onCount">
-                <input type="text" value="我能被3整除" v-if="num%3 == 0">
-                <input type="text" value="我能被2整除" v-else-if="num%2 == 0">
-            </ol><br>
-            <ol>
-                <!-- v-else ：条件都不符合时渲染； -->
-                <h5>☆ 条件都不符合测试:v-else</h5>
-                <label>v-else:</label>
-                <input type="text" :value="num">
-                <input type="button" value="v-else" @click="onCount">
-                <input type="text" value="我能被3整除" v-if="num%3 == 0">
-                <input type="text" value="我不能3整除" v-else>
-            </ol><br>
-            <ol>
-                <!-- v-for ：基于源数据多次渲染元素或模块 -->
-                <h5>☆ 循环测试:v-for</h5>
-                <label>v-for:</label>
-                <input type="button" :value="num_label" @click="onCount">
-                <input type="button" v-for="(val, idx) in num" :value="val">
-                <input type="text" v-for="i in items" :value="i">
-            </ol><br>
-            <ol>
-                <!-- v-model ：在表单控件元素（input等）上创建双向数据绑定（数据源） -->
-                <h5>☆ 动态双向绑定数据:v-model</h5>
-                <label>v-model:</label>
-                <input type="text" v-model:value="name">
-                <input type="button" value="动一下" v-on:click="onUpdName">
-                <input type="text" v-model:value="name">
-            </ol><br>
-        </div>
+                <!-- 操作按钮 -->
+                <input type="button" value="动起来(组件内)" v-on:click="click">
+                <input type="button" value="动起来(组件外)" v-on:click="click1">
+                <input type="button" value="查看组件数据" v-on:click="onShowData">
+            </div>
+        </li>
         <script type="text/javascript">
-            vm = new Vue({
-                el:'#app2',
-                data:{
-                    name:'app2',
-                    msg:'vue 2.0',
-                    bv:true,
-                    num:0,
-                    items:['A', 'B', 'C']
-                },
-                methods:{
-                    onUpdName(){
-                        this.name = Math.random().toString(36).substr(10);
-                    },
-                    onSwitch(){
-                        this.bv = !this.bv;
-                    },
-                    onCount(){
-                        this.num += 1;
-                    }
-                },
-                computed:{
-                    num_label:function(){
-                        return "个数:" + this.num;
-                    }
+            document.addEventListener('DOMContentLoaded', function () {
+                let data = {
+                    message: 'hello, vue'
                 }
-            })
-        </script>
-    </li>
+                vm = new Vue({
+                    el: '#app1', // 关联的DOM对象
+                    data: data, // 代理数据，即需要操作的数据
+                    methods: { // 对象方法
+                        click() {
+                            // 此处要使用this修改当前vue对象，修改的值会自动实时更新到View
+                            this.message = Math.random().toString(36).substr(2);
+                            console.log(this.message);
+                        },
+                        onShowData() {
+                            alert(this.message);
+                        }
+                    }
+                });
 
+                // 外部访问vue对象成员方法
+                // Vue实例自身属性和方法，暴露自身的属性和方法,以“$”开头的，例如：$el、$data
+                console.log(vm.$data);
+                console.log(vm.$data.message);
+            }, false);
+
+            // 函数在外面也可以，
+            function click1() {
+                alert('我是外人，先不动')
+            }
+        </script>
+
+
+        <li>
+            <div id="app2">
+                <h4>Vue指令</h4>
+                <ul>
+                    <li>
+                        <!-- 动态绑定数据。简写为【:】 => :class="{red:boolean}" -->
+                        <h5>动态绑定数据:v-bind</h5>
+                        <label>v-bind:</label>
+                        <input type="text" v-bind:value="name">
+                        <label>v-bind简写:</label>
+                        <input type="text" :value="name">
+                        <input type="button" value="动一下" v-on:click="onUpdName">
+                    </li><br>
+                    <li>
+                        <!-- 绑定时间监听器。简写为【@】=> @click="xxx" -->
+                        <h5>绑定时间监听器:v-on</h5>
+                        <label>v-on:</label>
+                        <input type="text" :value="name">
+                        <input type="button" value="动一下(v-on)" v-on:click="onUpdName">
+                        <input type="button" value="动一下(@)" @click="onUpdName">
+                    </li><br>
+                    <li>
+                        <!-- 更新数据，简写【{{x}}】，会覆盖已有结构 => {{ msg }} -->
+                        <h5>更新数据:v-text</h5>
+                        <input type="button" value="动一下" @click="onUpdName">
+                        <label>v-text:<span v-text="name"></span></label>
+                        <label><span> {{name}}</span></label>
+                    </li><br>
+                    <li>
+                        <!-- v-if:根据值的真假，切换元素会被销毁、重建； => 在dom中已消失 -->
+                        <h5>条件显示和渲染:v-if和v-show</h5>
+                        <label>v-if:</label>
+                        <input type="text" :value="bv">
+                        <input type="button" value="v-if" @click="onSwitch">
+                        <!-- 元素创建或销毁 -->
+                        <input type="text" value="有本事你点一下v-if按钮" v-if="bv">
+                        <!-- 元素在，切换可见属性 -->
+                        <input type="text" value="有本事你点一下v-if按钮" v-show="bv">
+                        <input type="button" value="看不见了吧，傻啦吧唧吧，你再点点试试" v-if="!bv" @click="onSwitch">
+                    </li><br>
+                    <li>
+                        <!-- v-else-if:多条件判断，为真则渲染； -->
+                        <h5>多条件测试:v-else-if</h5>
+                        <label>v-else-if:</label>
+                        <input type="text" :value="num">
+                        <input type="button" value="v-else-if" @click="onCount">
+                        <input type="text" value="我能被3整除" v-if="num%3 == 0">
+                        <input type="text" value="我能被2整除" v-else-if="num%2 == 0">
+                    </li><br>
+                    <li>
+                        <!-- v-else ：条件都不符合时渲染； -->
+                        <h5>条件都不符合测试:v-else</h5>
+                        <label>v-else:</label>
+                        <input type="text" :value="num">
+                        <input type="button" value="v-else" @click="onCount">
+                        <input type="text" value="我能被3整除" v-if="num%3 == 0">
+                        <input type="text" value="我不能3整除" v-else>
+                    </li><br>
+                    <li>
+                        <!-- v-for ：基于源数据多次渲染元素或模块 -->
+                        <h5>循环测试:v-for</h5>
+                        <label>v-for:</label>
+                        <input type="button" :value="num_label" @click="onCount">
+                        <input type="button" v-for="(val, idx) in num" :value="val">
+                        <input type="text" v-for="i in items" :value="i">
+                    </li><br>
+                    <li>
+                        <!-- v-model ：在表单控件元素（input等）上创建双向数据绑定（数据源） -->
+                        <h5>动态双向绑定数据:v-model</h5>
+                        <label>v-model:</label>
+                        <input type="text" v-model:value="name">
+                        <input type="button" value="动一下" v-on:click="onUpdName">
+                        <input type="text" v-model:value="name">
+                    </li><br>
+                    <li>
+                        <!-- v-html ：原生html显示 -->
+                        <h5>：原生html显示:v-html</h5>
+                        <label>v-html:</label>
+                        <p v-html="html_text"></p>
+                    </li><br>
+                </ul>
+            </div>
+            <script type="text/javascript">
+                vm = new Vue({
+                    el: '#app2',
+                    data: {
+                        name: 'app2',
+                        msg: 'vue 2.0',
+                        bv: true,
+                        num: 0,
+                        items: ['A', 'B', 'C'],
+                        html_text: '<span>我是原生html内容</span>'
+                    },
+                    methods: {
+                        onUpdName() {
+                            this.name = Math.random().toString(36).substr(10);
+                        },
+                        onSwitch() {
+                            this.bv = !this.bv;
+                        },
+                        onCount() {
+                            this.num += 1;
+                        }
+                    },
+                    computed: {
+                        num_label: function () {
+                            return "个数:" + this.num;
+                        }
+                    }
+                })
+            </script>
+        </li>
+
+        <li id='app3'>
+            <h4>Vue模版</h4>
+            <ul>
+                <li>
+                    <!-- 基于DOM的模版，模版都是可解析的有效的HTML -->
+                    <h5>html模版：v-html</h5>
+                    <label>纯文本:</label>
+                    <span v-text="tv"></span><br>
+
+                    <label>原生HTML:</label>
+                    <span v-html="thtml"></span><br>
+
+                    <input type="button" value="动一下" v-on:click="onTouch">
+                    <input type="text" v-model="tv">
+                </li><br>
+                <li>
+                    <h5>字符串模版:template</h5>
+                    <div id="str_temp1">
+                        <span>这些子节点不会显示的</span>
+                        <input type="text" value="照样忽略不显示">
+                    </div>
+                    <div id="str_temp2">
+                        <span>这些子节点不会显示的</span>
+                        <input type="text" value="照样忽略不显示">
+                    </div>
+                    <script type="x-template" id="tpl_str">
+                        <div>
+                            <h5>引用x-template代码段：</h5>
+                            <input type="text" value="template模版内容21">
+                            <p>模版内容22</p>
+                        </div>
+                    </script>
+                    <script type="text/javascript">
+                        vm1 = new Vue({
+                            el:'#str_temp1',
+                            // 要求template只有一个父节点，直接写字符串内容
+                            template:`<div><h5>直接写字符串内容：</h5><input type="text" value="template模版内容11"><p>模版内容12</p></div>`
+                        });
+
+                        vm2 = new Vue({
+                            el:'#str_temp2',
+                            // 要求template只有一个父节点，引用x-template代码段
+                            template:'#tpl_str'
+                        });
+                    </script>
+                </li><br>
+                <li>
+                    <h5>模版—render函数</h5>
+                    <div id='tpl_render'></div>
+                    <script type="text/javascript">
+                        document.addEventListener('DOMContentLoaded', function(){
+                            var vm = new Vue({
+                                el: '#tpl_render',
+                                render(createrElement) {//和原生创建的元素有区别的
+                                    return createrElement(//首先调用一个函数
+                                    "ul",
+                                    {
+                                        // 给UL添加dom属性和绑定事件等,就是v-bind:class="{bg:true}"
+                                        class: { bg:true },
+                                        style: { fontSize:"30px" },
+                                        attrs: { abc:"Datura" },
+                                        domProps: {
+                                            // 这个权重高，写了这个下面创建的li就都无效了
+                                            // innerHTML:"<li>我是html</li>" 
+                                        }
+                                    },
+                                     [
+                                        // 再次调用createrElement(),设置内容数据是1
+                                        createrElement("li",1),
+                                        createrElement("li",2),
+                                        createrElement("li",3)
+                                    ]
+                                )}
+                            });
+                        }, false);
+                    </script>
+                </li><br>
+            </ul>
+            <script type="text/javascript">
+                vm = new Vue({
+                    el:'#app3',
+                    data:{
+                        tv:'纯文本内容',
+                        thtml:`<span>我是原生HTML标签</span>`
+                    },
+                    methods:{
+                        onTouch(){
+                            this.tv = '纯文本内容' + Math.random().toString(36).substr(10);
+                            this.thtml = '<span>我是原生HTML标签' + Math.random().toString(36).substr(6) + '</span>';
+                        }
+                    }
+                });
+            </script>
+        </li>
+
+        <li id='app4'>
+            <h4>其他补充</h4>
+            <ul>
+                <!-- 可用于特性封装，重复利用 -->
+                <li>自定义指令</li>
+                <div id="g_def_cmd">
+                    <div v-gcolor>自定义全局指令测试</div>
+                </div>
+                <script type="text/javascript">
+                    // Vue的directive函数处理，独立于特定的Vue组件
+                    Vue.directive('gcolor', function(el, arg){
+                        el.style.backgroundColor = '#FF0000';
+                    });
+
+                    vm = new Vue({
+                        el:'#g_def_cmd'
+                    });
+                </script>
+
+                <div id="l_def_cmd">
+                    <div v-lcolor>自定义局部指令测试</div>
+                </div><br>
+                <script type="text/javascript">
+                    // 选项对象的directives属性（注意此处有个s）,且在组件内的directives区定义
+                    vm = new Vue({
+                        el: '#l_def_cmd',
+                        directives:{
+                            'lcolor':function (el,binding) {
+                                el.style.backgroundColor = '#00FF00';
+                            }
+                        }
+                    });
+                </script>
+
+                <!-- 模版是未来描述视图的结构，在模版中放入太多逻辑，导致模版过重难以维护，
+                计算属性将表达式的计算值缓存，在需要的时候更新，提升性能 -->
+                <li>计算属性-computed</li>
+                <div id="computed_test">
+                    <label>a：</label>
+                    <input type="text" v-model="a"><br>
+                    <label>b：</label>
+                    <input type="text" v-model="b"><br>
+                    <label>a+b：</label>
+                    <input type="text" v-model="anb" readonly>
+                    <input type="button" value="魔法键" @click="onUpd">
+                    <br>
+                </div><br>
+                <script type="text/javascript">
+                    vm = new Vue({
+                        el:'#computed_test',
+                        data:{
+                            a:1,
+                            b:5
+                        },
+                        computed:{
+                            anb:{
+                                get:function(){
+                                    return parseInt(this.a) + parseInt(this.b);
+                                },
+                                set:function(val){
+                                    this.a = parseInt(val/2);
+                                    this.b = parseInt(val/2);
+                                    return this.a + this.b;
+                                }
+                            }
+                        },
+                        methods:{
+                            onUpd(){
+                                this.anb = Math.ceil(Math.random()*1000);
+                            }
+                        }
+                    })
+                </script>
+
+
+                <li>Vue组件:component和components</li>
+                <!-- vue中的组件是一个自定义标签（元素），Vue.js的编译器为它添加特殊功能；vue也可以拓展原生的html元素，封装可重用的代码 -->
+                <div id="g_component"  style="background: #FF0000">
+                    <my-component></my-component>
+                </div>
+                <div id="l_component" style="background: #00FF00">
+                    <child-component></child-component>
+                    <common-component></common-component>
+                    <ref-component></ref-component>
+                    <component3></component3>
+                    <my-component></my-component>
+                </div>
+                <script id="ref_component" type="x-template">
+                    <h6>我是局部组件RefComponent</h6>
+                </script>
+                <script id="component3" type="x-template">
+                        <h6>我是局部组件Component3</h6>
+                </script>
+                <script type="text/javascript">
+                    // 全局注册
+                    // html中是横杠的，在js中就是驼峰
+                    myComponent = Vue.component('myComponent',{
+                        template: `<h6>我是全局组件</h6>`
+                    });
+
+                    vm1 = new Vue({
+                        el: '#g_component'
+                    });
+
+                    // 局部组件
+                    // html中是横杠的，在js中就是驼峰
+                    ChildComponent = {
+                        template:`<h6>我是局部组件Child</h6>`
+                    };
+                    CommonComponent = {
+                        template: `<h6>我是局部组件Common</h6>`
+                    };
+                    RefComponent = {
+                        template:`#ref_component`
+                    };
+                    Component3 = {
+                        template:`#component3`
+                    };
+                    vm2 = new Vue({
+                        el:'#l_component',
+                        components:{
+                            ChildComponent,
+                            CommonComponent,
+                            myComponent,
+                            RefComponent,
+                            Component3
+                        }
+                    });
+                </script>
+
+
+                <li>在组件中定义组件</li>
+                <div id="el_comcom1">
+                    <tpl></tpl>
+                </div>
+                <template id="tpl_comcom1">
+                    <div>
+                        <span>父组件信息:{{message}} | {{rnum}}</span>
+                        <child></child>
+                        <child2></child2>
+                    </div>
+                </template>
+                <script type="text/javascript">
+                    tpl = {
+                        template: '#tpl_comcom1',
+                        data() {
+                            return {
+                                message: '在组件中定义组件信息-P',
+                                rnum:Math.ceil(Math.random()*1000)
+                            }
+                        },
+                        components: {
+                            child: {
+                                template: `<p>我是第一个子组件</p>`
+                            },
+                            child2: {
+                                template: `<p>我是第二个子组件</p>`
+                            }
+                        }
+                    };
+
+                    vm = new Vue({
+                        el: '#el_comcom1',
+                        components: {
+                            tpl
+                        }
+                    });
+                </script>
+            </ul>
+        </li>
     </ol>
 </body>
+
 </html>
