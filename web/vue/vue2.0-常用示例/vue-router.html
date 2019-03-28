@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="./js/vue.min.js"></script>
+    <script src="./js/vue-router.js"></script>
+    <title>Vue2.0路由练习</title>
+</head>
+
+<body>
+    <div id='app'>
+        <h1>Hello Vue Router!</h1>
+        <div class="list-group">
+            <router-link to="/home">主页</router-link>
+            <router-link to="/about">关于</router-link>
+            <router-link to="/set">配置中心</router-link>
+        </div>
+
+        <div>
+            <input type="button" value="动态路由">
+            <router-link to="/page/1">页面1</router-link>
+            <router-link to="/page/2">页面2</router-link>
+            <router-link to="/arbboter/page/1">arbboter页面1</router-link>
+            <router-link to="/arbboter/page/2">arbboter页面2</router-link>
+        </div>
+
+        <div>
+            <router-view></router-view>
+        </div>
+    </div>
+
+    <template id="home">
+        <div>
+            <h1>Home</h1>
+            <p>{{msg}}</p>
+        </div>
+    </template>
+    <template id="about">
+        <div>
+            <h1>About</h1>
+            <p>This is the tutorial about vue-router.</p>
+        </div>
+    </template>
+
+    <script type="text/javascript">
+        // 由于版本升级且版本间不兼容，导致路由使用模块的代码不一定能适应
+        // 注意区分自己使用程序版本，本版本代码环境 => Vue.js v2.5.13 + vue-router v3.0.1
+
+        // 创建HOME组件内容
+        HomeTpl = {
+            template:`<div><h1>Home</h1><p>{{message}}</p></div>`,
+            data(){
+                return {
+                    message:'我是Arbboter的主页'
+                }
+            }
+        };
+
+        // 创建About组件内容
+        AboutTpl = {
+            template:`<div><h1>About</h1><p>Vue-Router测试用例代码</p><p>{{message}}</p></div>`,
+            data(){
+                return {
+                    message:'关于Vue-About练习相关信息'
+                }
+            }
+        };
+
+        // 创建配置组件内容
+        SetTpl = {
+            template:`<div><h1>配置中心</h1><p>{{message}}</p></div>`,
+            data(){
+                return {
+                    message:'配置中心相关信息'
+                }
+            }
+        };
+
+        // 创建配置组件内容
+        PageInfoTpl = {
+            template:`<div><h1>页面{{$route.params.pid}}</h1></div>`
+        };
+
+        // 用户页面
+        UserPageInfoTpl = {
+            template:`<div><h1>用户{{$route.params.user}}的页面{{$route.params.pid}}</h1><p>路由匹配信息{{$route.params.pathMatch}}</p></div>`
+        };
+
+        // 404页面
+        Page404 = {
+            template:`<h1>你访问的页面不存在</h1>`
+        }
+
+        // 创建路由
+        const routes = [
+            { path:'/home', name:'home', component: HomeTpl },
+            { path:'/about', component: AboutTpl},
+            { path:'/page/:pid', component: PageInfoTpl},             // 动态路由
+            { path:'/:user/page/:pid', component: UserPageInfoTpl},   // 多层动态路由
+
+            // 重定向
+            { path:'/', redirect:'/home'}, // 根据路径重定向
+            { path:'/h', redirect: { name: 'home' } }, // 根据名字重定向
+            { path:'/p/:pid', redirect: to => {
+                console.log(this.$router);
+                return '/page/' + this.$router;} },
+            { path:'*', component:Page404 }
+        ]
+        router = new VueRouter({
+            routes:routes
+        });
+
+        // 关联挂载
+        const app = new Vue({
+            router
+        }).$mount('#app');
+    </script>
+</body>
+
+</html>
