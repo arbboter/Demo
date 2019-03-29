@@ -13,20 +13,38 @@
 <body>
     <div id='app'>
         <h1>Hello Vue Router!</h1>
-        <div class="list-group">
+        <div>
+            <label>路由：</label>
             <router-link to="/home">主页</router-link>
             <router-link to="/about">关于</router-link>
             <router-link to="/set">配置中心</router-link>
-        </div>
+        </div><br>
 
         <div>
-            <input type="button" value="动态路由">
+            <label>动态路由：</label>
             <router-link to="/page/1">页面1</router-link>
             <router-link to="/page/2">页面2</router-link>
             <router-link to="/arbboter/page/1">arbboter页面1</router-link>
             <router-link to="/arbboter/page/2">arbboter页面2</router-link>
-        </div>
+            <router-link to="/arbboter/other/home">arbboter的home页面</router-link>
+            <router-link to="/arbboter/other/about">arbboter的about页面</router-link>
+        </div><br>
 
+        <div>
+            <label>编程式的导航：</label>
+            <input type="button" value="随机用户" @click='onRandUser'>
+            <label id='rand_user'></label>
+            <input type="button" value="前进" @click='onForward'>
+            <input type="button" value="后退" @click='onBack'>
+        </div><br>
+
+        <div>
+            <label>命名路由：</label>
+            <input type="button" value="命名访问Home" @click="onNamedHome">
+            <input type="button" value="命名访问随机用户页" @click="onNamedUserPage">
+        </div>
+        
+        <!-- 页面内容 -->
         <div>
             <router-view></router-view>
         </div>
@@ -51,7 +69,7 @@
 
         // 创建HOME组件内容
         HomeTpl = {
-            template:`<div><h1>Home</h1><p>{{message}}</p></div>`,
+            template:`<div><h1>Home</h1><p>{{message}} | {{$route.params}}</p></div>`,
             data(){
                 return {
                     message:'我是Arbboter的主页'
@@ -61,7 +79,7 @@
 
         // 创建About组件内容
         AboutTpl = {
-            template:`<div><h1>About</h1><p>Vue-Router测试用例代码</p><p>{{message}}</p></div>`,
+            template:`<div><h1>About</h1><p>Vue-Router测试用例代码</p><p>{{message}}| {{$route.params}}</p></div>`,
             data(){
                 return {
                     message:'关于Vue-About练习相关信息'
@@ -86,20 +104,36 @@
 
         // 用户页面
         UserPageInfoTpl = {
-            template:`<div><h1>用户{{$route.params.user}}的页面{{$route.params.pid}}</h1><p>路由匹配信息{{$route.params.pathMatch}}</p></div>`
+            template:`<div><h1>用户{{$route.params.user}}的页面{{$route.params.pid}}</h1><p>路由参数信息{{$route.params}}</p></div>`
         };
+
+        // 用户嵌套子页面
+        UserChildTpl = {
+            template:`<div><h1>用户{{$route.params.user}}的嵌套页面</h1><router-view></router-view></div>`
+        }
 
         // 404页面
         Page404 = {
             template:`<h1>你访问的页面不存在</h1>`
         }
 
-        // 创建路由
+        // 路由设置
+        // 同一个路径可以匹配多个路由，但匹配的优先级遵循按照路由的定义顺序：谁先定义的，谁的优先级就最高。
         const routes = [
-            { path:'/home', name:'home', component: HomeTpl },
+            { path:'/home', name:'home', component: HomeTpl },                          // 该路由命名为:home
             { path:'/about', component: AboutTpl},
-            { path:'/page/:pid', component: PageInfoTpl},             // 动态路由
-            { path:'/:user/page/:pid', component: UserPageInfoTpl},   // 多层动态路由
+            { path:'/page/:pid', component: PageInfoTpl},                               // 动态路由
+            { path:'/:user/page/:pid', name:'user_page', component: UserPageInfoTpl},   // 多层动态路由，名字为:user_page
+            { path:'/:user/other/:c', component: UserChildTpl, children:[               // 嵌套路由
+                {
+                    path:'home',
+                    component: HomeTpl
+                },
+                {
+                    path:'about',
+                    component:AboutTpl
+                }
+            ]},
 
             // 重定向
             { path:'/', redirect:'/home'}, // 根据路径重定向
@@ -107,11 +141,36 @@
             { path:'/p/:pid', redirect: to => {
                 console.log(this.$router);
                 return '/page/' + this.$router;} },
+            
+            // 404页面
             { path:'*', component:Page404 }
-        ]
+        ];
+
+        // 路由创建
         router = new VueRouter({
             routes:routes
         });
+
+        // 相关函数
+        function onRandUser(){
+            user_path = '/' + Math.random().toString(36).substr(6) + '/page/' + Math.ceil(Math.random()*1000);
+            document.getElementById('rand_user').innerText = user_path;
+            router.push(user_path);
+        }
+        function onForward(){
+            router.go(1);
+        }
+        function onBack(){
+            router.go(-1);
+        }
+        function onNamedHome(){
+            router.push({name:'home'});
+        }
+        function onNamedUserPage(){
+            user = Math.random().toString(36).substr(6);
+            pid = Math.ceil(Math.random()*1000);
+            router.push({name:'user_page', params:{user:user, pid:pid}});
+        }
 
         // 关联挂载
         const app = new Vue({
